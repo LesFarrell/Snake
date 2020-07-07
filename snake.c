@@ -37,9 +37,13 @@ enum Direction
 // Global variables and flags.
 int LengthOfSnake = 4;
 int DeadSnake = False;
+int DeadSnakeSoundPlayed = False;
 int Score = 0;
 int HiScore = 250;
 int SnakeDirection = LEFT;
+
+Sound PickUp;
+Sound Crash;
 
 // Function to generate random numbers within a passed range.
 int RandomRange(int lower, int upper) { return (rand() % (upper - lower + 1)) + lower; }
@@ -127,6 +131,7 @@ int InitialiseGame()
     // Reset the score and flags.
     Score = 0;
     DeadSnake = False;
+    DeadSnakeSoundPlayed = False;
     SnakeDirection = LEFT;
 }
 
@@ -142,8 +147,14 @@ int main(void)
     // Initialise Raylib and create the game window.
     InitWindow(screenWidth, screenHeight, "Snake");
 
+    InitAudioDevice();
+
     // Load the sprite sheet.
     imgSprites = LoadTexture("snake.png");
+
+    // Load some sounds.
+    PickUp = LoadSound("pickup.wav");
+    Crash = LoadSound("crash.wav");
 
     // Target 60 FPS.
     SetTargetFPS(60);
@@ -164,13 +175,25 @@ int main(void)
 
         // Did the snake hit the edge of the screen?
         if (SnakeSegments[0].x <= 0 || SnakeSegments[0].x >= screenWidth)
+        {
             DeadSnake = True;
+            if (DeadSnakeSoundPlayed == False)
+                PlaySound(Crash);
+            DeadSnakeSoundPlayed = True;
+        }
+
         if (SnakeSegments[0].y <= 0 || SnakeSegments[0].y >= screenHeight)
+        {
             DeadSnake = True;
+            if (DeadSnakeSoundPlayed == False)
+                PlaySound(Crash);
+            DeadSnakeSoundPlayed = True;
+        }
 
         // Did we hit the flower?
         if ((SnakeSegments[0].x >= FlowerPos.x && SnakeSegments[0].x <= FlowerPos.x) && (SnakeSegments[0].y >= FlowerPos.y && SnakeSegments[0].y <= FlowerPos.y))
         {
+            PlaySound(PickUp);
 
             // Increase the length of the snake.
             LengthOfSnake++;
@@ -209,7 +232,12 @@ int main(void)
             // Has the snake tried to eat itself?
             for (int i = LengthOfSnake; i > 0; i--)
                 if (SnakeSegments[i].x == pos.x && SnakeSegments[i].y == pos.y)
+                {
                     DeadSnake = True;
+                    if (DeadSnakeSoundPlayed == False)
+                        PlaySound(Crash);
+                    DeadSnakeSoundPlayed = True;
+                }
 
             // Update the snakes position.
             if (DeadSnake == False)
@@ -236,6 +264,8 @@ int main(void)
         // Tell Raylib we have finished drawing.
         EndDrawing();
     }
+
+    CloseAudioDevice();
 
     // Close down Raylib.
     CloseWindow();
