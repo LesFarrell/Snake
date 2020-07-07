@@ -25,6 +25,7 @@ enum BOOL
     False,
     True
 };
+
 enum Direction
 {
     LEFT,
@@ -43,7 +44,7 @@ int SnakeDirection = LEFT;
 // Function to generate random numbers within a passed range.
 int RandomRange(int lower, int upper) { return (rand() % (upper - lower + 1)) + lower; }
 
-// Function to draw the sprites, scores and game over message.
+// Function to draw the sprites, scores and game over message, etc.
 void DrawScreen(int screenWidth, int screenHeight)
 {
     char buffer[80] = {'\0'};
