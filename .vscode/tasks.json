@@ -10,6 +10,7 @@
 			"args": [
 				// Ask msbuild to generate full paths for file names.
 				"${relativeFile}",
+				"snake.res",
 				"-g",
 				"-std=c99",
 				"-Wall",
@@ -20,6 +21,7 @@
 				"-lkernel32",
 				"-lshell32",
 				"-luser32",
+				"snake.res",
 				"-vv",
 				"-bench",
 			],
@@ -37,6 +39,7 @@
 			"command": "..\\..\\TCC\\tcc.exe",
 			"args": [
 				"${relativeFile}",
+				"snake.res",
 				"-Wl,-subsystem=gui",
 				"-std=c99",
 				"-Wall",
