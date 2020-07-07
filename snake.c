@@ -5,8 +5,10 @@
 // Our sprites are 16x16 so declare as a constant.
 #define SpriteSize 16
 
-// Used by Raylib to store the sprite sheet.
+// Used by Raylib to store the sprite sheet and sounds.
 Texture2D imgSprites;
+Sound sndPickUp;
+Sound sndCrash;
 
 // Constants for the sprite locations within the sprite sheet.
 Rectangle HEAD = {16, 0, SpriteSize, SpriteSize};
@@ -35,15 +37,12 @@ enum Direction
 };
 
 // Global variables and flags.
-int LengthOfSnake = 4;
+int LengthOfSnake = 0;
 int DeadSnake = False;
 int DeadSnakeSoundPlayed = False;
 int Score = 0;
-int HiScore = 250;
+int HiScore = 150;
 int SnakeDirection = LEFT;
-
-Sound PickUp;
-Sound Crash;
 
 // Function to generate random numbers within a passed range.
 int RandomRange(int lower, int upper) { return (rand() % (upper - lower + 1)) + lower; }
@@ -54,29 +53,16 @@ void DrawScreen(int screenWidth, int screenHeight)
     char buffer[80] = {'\0'};
 
     // Draw the snake.
-    for (int i = 0; i < LengthOfSnake; i++)
+    for (int i = 1; i <= LengthOfSnake; i++)
     {
         if (DeadSnake == True)
-        {
-            // If the snake is dead then draw the head and dead body.
-            if (i == 0)
-                DrawTextureRec(imgSprites, HEAD, SnakeSegments[i], WHITE);
-            else
-                DrawTextureRec(imgSprites, DEAD, SnakeSegments[i], WHITE);
-        }
+            // If the snake is dead then draw the dead body.
+            DrawTextureRec(imgSprites, DEAD, SnakeSegments[i], WHITE);
         else
-        {
-            // Draw the snake as normal.
-            if (i == 0)
-            {
-                DrawTextureRec(imgSprites, HEAD, SnakeSegments[i], WHITE);
-            }
-            else
-            {
-                DrawTextureRec(imgSprites, BODY, SnakeSegments[i], WHITE);
-            }
-        }
+            // Otherwise then draw the body.
+            DrawTextureRec(imgSprites, BODY, SnakeSegments[i], WHITE);
     }
+    DrawTextureRec(imgSprites, HEAD, SnakeSegments[0], WHITE);
 
     // Draw the Flower.
     DrawTextureRec(imgSprites, FLOWER, FlowerPos, WHITE);
@@ -91,7 +77,7 @@ void DrawScreen(int screenWidth, int screenHeight)
     if (DeadSnake == True)
     {
         sprintf(buffer, "Game Over - Press 'Space' to restart.", Score);
-        DrawText(buffer, 85, screenHeight / 2, 24, WHITE);
+        DrawText(buffer, 85, screenHeight / 2, 24, BLUE);
     }
 }
 
@@ -111,6 +97,13 @@ int InitialiseGame()
 {
     int count = 0;
 
+    // Clear down the array
+    for (int i = 0; i < 1000; i++)
+    {
+        SnakeSegments[i].x = -16;
+        SnakeSegments[i].y = -16;
+    }
+
     // Start length of the snake.
     LengthOfSnake = 4;
 
@@ -119,14 +112,14 @@ int InitialiseGame()
     for (int i = StartX; i < (LengthOfSnake * SpriteSize) + StartX; i = i + SpriteSize)
     {
         SnakeSegments[count].x = i;
-        SnakeSegments[0].y = 112;
+        SnakeSegments[0].y = 192;
         count++;
     }
     pos.x = SnakeSegments[0].x;
-    pos.y = 112;
+    pos.y = 192;
 
     FlowerPos.x = 64;
-    FlowerPos.y = 112;
+    FlowerPos.y = 192;
 
     // Reset the score and flags.
     Score = 0;
@@ -138,9 +131,9 @@ int InitialiseGame()
 // Main entry point.
 int main(void)
 {
-    int FrameCounter = 0;
     int x = 0;
     int y = 0;
+    int FrameCounter = 0;
     int screenWidth = 40 * SpriteSize;
     int screenHeight = 25 * SpriteSize;
 
@@ -153,8 +146,12 @@ int main(void)
     imgSprites = LoadTexture("snake.png");
 
     // Load some sounds.
-    PickUp = LoadSound("pickup.wav");
-    Crash = LoadSound("crash.wav");
+    sndPickUp = LoadSound("pickup.wav");
+    sndCrash = LoadSound("crash.wav");
+
+    // Tweak the volumes
+    SetSoundVolume(sndPickUp, 0.15);
+    SetSoundVolume(sndCrash, 0.15);
 
     // Target 60 FPS.
     SetTargetFPS(60);
@@ -178,7 +175,7 @@ int main(void)
         {
             DeadSnake = True;
             if (DeadSnakeSoundPlayed == False)
-                PlaySound(Crash);
+                PlaySound(sndCrash);
             DeadSnakeSoundPlayed = True;
         }
 
@@ -186,14 +183,14 @@ int main(void)
         {
             DeadSnake = True;
             if (DeadSnakeSoundPlayed == False)
-                PlaySound(Crash);
+                PlaySound(sndCrash);
             DeadSnakeSoundPlayed = True;
         }
 
         // Did we hit the flower?
-        if ((SnakeSegments[0].x >= FlowerPos.x && SnakeSegments[0].x <= FlowerPos.x) && (SnakeSegments[0].y >= FlowerPos.y && SnakeSegments[0].y <= FlowerPos.y))
+        if ((SnakeSegments[0].x == FlowerPos.x && SnakeSegments[0].y == FlowerPos.y))
         {
-            PlaySound(PickUp);
+            PlaySound(sndPickUp);
 
             // Increase the length of the snake.
             LengthOfSnake++;
@@ -215,7 +212,6 @@ int main(void)
         // Up date the snakes position once every six seconds.
         if (FrameCounter >= 60 / 6)
         {
-
             // Reset the framecounter.
             FrameCounter = 0;
 
@@ -231,11 +227,11 @@ int main(void)
 
             // Has the snake tried to eat itself?
             for (int i = LengthOfSnake; i > 0; i--)
-                if (SnakeSegments[i].x == pos.x && SnakeSegments[i].y == pos.y)
+                if (SnakeSegments[i].x == SnakeSegments[0].x && SnakeSegments[i].y == SnakeSegments[0].y)
                 {
                     DeadSnake = True;
                     if (DeadSnakeSoundPlayed == False)
-                        PlaySound(Crash);
+                        PlaySound(sndCrash);
                     DeadSnakeSoundPlayed = True;
                 }
 
