@@ -209,7 +209,7 @@ int main(void)
             FlowerPos.y = ((y + SpriteSize / 2) / SpriteSize) * SpriteSize;
         }
 
-        // Up date the snakes position once every six seconds.
+        // Up date the snakes position once every six micro seconds.
         if (FrameCounter >= 60 / 6)
         {
             // Reset the framecounter.
